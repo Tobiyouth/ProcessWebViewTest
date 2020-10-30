@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui">
+    <!-- import CSS -->
+</head>
+<style>
+
+</style>
+<body>
+    <div id="div" style="
+    height: 100px;"></div>
+
+    <button onclick="open1()">开启</button>
+    <button onclick="close1()">关闭</button>
+    <button onclick="add()">添加</button>
+    <button onclick="readAll()">读取</button>
+    <button onclick="deleteDB()">删除数据库</button>
+
+
+</body>
+<script type="text/javascript"  src="https://cdn.bootcss.com/vConsole/3.3.0/vconsole.min.js"></script>
+<script>
+    var db;
+    var vConsole = new VConsole();
+    var div = document.getElementById('div');
+    var indexedDB= window.indexedDB || window.webkitindexedDB || window.msIndexedDB || mozIndexedDB;
+
+
+
+    function open1(){
+        var request = indexedDB.open('test2', 1);
+
+        console.log(request)
+
+        request.onerror = function(event) {
+            console.log(event);
+            div.innerText = "IndexedDB数据库打开失败"
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            console.log(event);
+            div.innerText = "IndexedDB数据库打开成功"
+
+        };
+
+        request.onupgradeneeded = function (event) {
+            db = event.target.result;
+            var objectStore;
+            if (!db.objectStoreNames.contains('person')) {
+                objectStore = db.createObjectStore('person', { keyPath: 'id' });
+            }
+        }
+
+        request.onblocked = function(event){
+            console.log(onblocked);
+        }
+    }
+
+    function close1() {
+        db.close();
+        div.innerText = "关闭"
+    }
+
+
+    function add() {
+
+      var request = db.transaction(['person'], 'readwrite')
+        .objectStore('person')
+        .add({ id: new Date().getTime(), name: '张三', age: 24, email: 'zhangsan@example.com' });
+
+      request.onsuccess = function (event) {
+        console.log('数据写入成功');
+      };
+
+      request.onerror = function (event) {
+        console.log('数据写入失败');
+      }
+    }
+
+    function readAll() {
+        var objectStore = db.transaction('person').objectStore('person');
+
+        objectStore.openCursor().onsuccess = function (event) {
+            var cursor = event.target.result;
+
+            if (cursor) {
+                console.log('Id: ' + cursor.key);
+                console.log('Name: ' + cursor.value.name);
+                console.log('Age: ' + cursor.value.age);
+                console.log('Email: ' + cursor.value.email);
+                cursor.continue();
+            } else {
+                console.log('没有更多数据了！');
+            }
+        };
+    }
+
+    // 删除数据库
+    function deleteDB() {
+        var deleteQuest = this.indexedDB.deleteDatabase("test2");
+        deleteQuest.onerror = function () {
+            console.log('删除数据库出错');
+        };
+        deleteQuest.onsuccess = function () {
+            div.innerText = "删除数据库成功"
+
+        }
+    }
+</script>
+</html>
